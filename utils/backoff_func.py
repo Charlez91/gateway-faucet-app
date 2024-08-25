@@ -1,7 +1,10 @@
 # imports
 import random
 import time
+from concurrent.futures import ThreadPoolExecutor
+from functools import wraps
 
+from asyncio import sleep, get_event_loop
 
 count = 0
  
@@ -17,7 +20,8 @@ def retry_with_exponential_backoff(
     """Retry a function with exponential backoff."""
     
     def wrapped_func(func):
-        def wrapper(*args, **kwargs):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
             # Initialize variables
             num_retries = 0
             delay = initial_delay
@@ -26,7 +30,9 @@ def retry_with_exponential_backoff(
             while True:
                 try:
                     print("trying")
-                    return func(*args, **kwargs)
+                    loop = get_event_loop()
+                    result = await loop.run_in_executor(ThreadPoolExecutor(max_workers=10), func, *args, **kwargs)
+                    return result
     
                 # Retry on specific errors
                 except errors as e:
@@ -46,7 +52,8 @@ def retry_with_exponential_backoff(
     
                     # Sleep for the delay
                     print(f"delay:{delay}")
-                    time.sleep(delay)
+                    #time.sleep(delay)
+                    await sleep(delay)
     
                 # Raise exceptions for any errors not specified
                 except Exception as e:

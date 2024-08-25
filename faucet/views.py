@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 
 from django.db.models import Count
+from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser, FormParser
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_503_SERVICE_UNAVAILABLE
@@ -10,7 +11,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from faucet.serializer import FundSerializer, StatsSerializer
 from faucet.models import Transaction
-from faucet.tasks import check_and_update_txn
+from faucet.tasks import check_and_update_task
 from utils.throttle import (
                 UserBurstRateThrottle, 
                 WalletRateThrottle
@@ -73,7 +74,7 @@ class FundAddressAPIView(APIView):
                 txn_hash_str = txn_hash.hex()
                 if tx:
                     transaction = Transaction.objects.create(wallet_address=wallet_address, txn_hash=txn_hash_str)
-                    check_and_update_txn.delay(transaction.id, txn_hash)
+                    check_and_update_task.delay(transaction.id, txn_hash)
                     return Response({
                         "faucet_txnID":f"{transaction.id}",
                         "transaction_hash":f"{txn_hash_str}",
@@ -117,7 +118,7 @@ class TransactionStatsAPIView(APIView):
     
     def get(self, request):
         txns = Transaction.objects.\
-            filter(created_at__gte = datetime.utcnow() - timedelta(hours=24,)).\
+            filter(created_at__gte = timezone.now() - timedelta(hours=24,)).\
             values("status").annotate(count= Count("id"))
         print(txns)
         res = defaultdict(int)
@@ -126,4 +127,9 @@ class TransactionStatsAPIView(APIView):
                 res["successful_txns"] = txn.get("count")
             if txn.get("status") == "failed":
                 res["failed_txns"] = txn.get("count")
-        return Response({"successful_txns":res["successful_txns"], "failed_txns":res["failed_txns"], "message":"Transaction stats in the last 24hrs"}, 200)
+        return Response(
+            {"successful_txns":res["successful_txns"], 
+             "failed_txns":res["failed_txns"], 
+             "message":"Transaction stats in the last 24hrs"
+            }, 
+             HTTP_200_OK)

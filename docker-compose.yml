@@ -1,0 +1,76 @@
+version: '3.9'  # Updated to the latest stable version
+
+services:
+  web:
+    build: .
+    container_name: faucet_app
+    #command: ["gunicorn", "-c", "gunicorn.conf.py"]
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    volumes:
+      - .:/app
+      - gunicorn-logs:/var/log/gunicorn
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000:8000"
+    networks:
+      - webapp
+
+  db:
+    image: postgres:13-alpine
+    container_name: postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DBNAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    networks:
+      - webapp
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: redis_cache
+    volumes:
+      - redis_data:/data
+    networks:
+      - webapp
+  
+  celery:
+    build: .
+    container_name: celery_worker
+    command: celery -A backend worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+    networks:
+      - webapp
+    
+  flower:
+    build: .
+    container_name: flower_dashboard
+    command: celery -A backend flower 
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - webapp
+
+volumes:
+  postgres_data:
+  redis_data:
+  gunicorn-logs:
+
+networks:
+  webapp:
