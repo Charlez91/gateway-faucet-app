@@ -40,13 +40,12 @@ def build_transaction(receiving_address:str, amount:float=0.0001, account= get_a
         'to': web3.to_checksum_address(receiving_address),
         'value': value,
         'nonce': web3.eth.get_transaction_count(account.address),
-        #'gas':  get_gas_fee() if get_gas_fee()<value else web3.to_wei(0.00001, 'ether'),
         "gas":60000,
         'maxFeePerGas': int(fee*0.8),
         'maxPriorityFeePerGas': int(fee*0.5),
         'chainId':11155111
     }
-    print(txn)
+    #print(txn)
     return txn
 
 def sign_and_send_txn(txn:dict):    
@@ -56,14 +55,14 @@ def sign_and_send_txn(txn:dict):
         tx_hash = web3.eth.send_raw_transaction(signed.rawTransaction)
     except(Exception) as e:
         txn["nonce"] +=1
-        print(e, dir(e), type(e), e.args, e.__dict__)
+        #print(e, dir(e), type(e), e.args, e.__dict__)
         if e.args[0].get("message") == "replacement transaction underpriced" and e.args[0].get("code") == -32000:
             signed = web3.eth.account.sign_transaction(txn, pk)
             tx_hash = web3.eth.send_raw_transaction(signed.rawTransaction)
             return tx_hash
         raise e
 
-    print(signed, tx_hash)
+    #print(signed, tx_hash)
     return tx_hash
 
 def get_txn(tx_hash):

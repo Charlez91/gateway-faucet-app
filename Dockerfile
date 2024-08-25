@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
-# Gunicorn log setup
+# Gunicorn log setup. I have issues with gunicorn wiht docker for now
 RUN mkdir -p /var/log/gunicorn /var/run/gunicorn && \
     touch /var/log/gunicorn/access.log /var/log/gunicorn/error.log && \
     chown -R www-data:www-data /var/log/gunicorn /var/run/gunicorn

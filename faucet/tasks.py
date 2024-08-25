@@ -31,7 +31,7 @@ def check_and_update_task(txn_id, txn_hash):
             transaction = Transaction.objects.get(id=txn_id)
             tx = get_txn_receipt(txn_hash)#I decided to leave it synchronous
             txn_status, txn_receipt = tx
-            print(tx, transaction)
+            #print(tx, transaction)
             if tx is None:#this block might never execute of the web3.exceptions raising exceptions on null txns receipts
                 raise TxnPendingException
             if tx and txn_status:

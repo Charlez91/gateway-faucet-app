@@ -36,6 +36,12 @@ pip install -r requirements.txt
 
 * You can setup your environment variables by manually setting(windows use set) or exporting(linux use the export command) them or you can create a .env file inside the faucet file using the .env_example.
 
+* create migrations files and run migrations on the db. Also create cache table for your app cache settings
+```bash
+$ python manage.py makemigrations
+$ python manage.py migrate
+$ python manage.py createcachetable
+```
 
 * Run the app. For windows you can
 ```cmd
@@ -63,16 +69,16 @@ You can setup the app by running in a containerized setting by taking advantage 
 ```bash
 docker build -t faucet_app .
 ```
-* To run the Docker container. This will expose your Flask application on port 5000 of your local machine:
+* To run the Docker container. This will expose your Django application on port 8000 of your local machine:
 
 ```docker
 docker run -p 8000:8000 faucet_app
 ```
 ### Using Docker-Compose
-* You can build and run once with the following command
+* You can build and run once the `docker-compose.yml` file with the following command
 
 ```bash
-docker-compose up
+docker-compose up --build
 ```
 * Tear down with:
 
@@ -81,4 +87,4 @@ docker-compose down
 ```
 
 ### Swagger/OpenApi Documentation
-Swagger(now OpenAPI) was used to provide a simple documentation for the RESTAPI. After initialization visit [localhost:8000/docs](localhost:8000/docs)
+Swagger(now OpenAPI) was used to provide a simple documentation for the RESTAPI. After initialization visit [localhost:8000/docs](localhost:8000/docs) and interact with the documentation.You can make requests directly to the REST API from this interface.

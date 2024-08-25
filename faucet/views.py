@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from collections import defaultdict
 
 from django.db.models import Count
@@ -9,7 +9,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_RE
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
-from faucet.serializer import FundSerializer, StatsSerializer
+from faucet.serializer import FundSerializer
 from faucet.models import Transaction
 from faucet.tasks import check_and_update_task
 from utils.throttle import (
@@ -40,7 +40,7 @@ class FundAddressAPIView(APIView):
         description="This is POST method api endpoint to fund an address with 0.0001 sepolia Eth",
         request= FundSerializer,
         responses={
-            200: OpenApiResponse(description='Json Response'),
+            201: OpenApiResponse(description='Json Response'),
             400: OpenApiResponse(description='Validation error')
         }
     )
@@ -64,13 +64,13 @@ class FundAddressAPIView(APIView):
                 account = get_account()
                 if web3.eth.get_balance(account.address) <= web3.to_wei(0.0001, 'ether'):
                     return Response("Faucet Funds are low. Try Again later", HTTP_400_BAD_REQUEST)
-                print("in try block")
+                #print("in try block")
                 txn_hash = sign_and_send_txn(build_transaction(wallet_address, account=account))
             except(Exception) as e:
                 print(e)
             else:
                 tx = get_txn(txn_hash)
-                print(dir(txn_hash))
+                #print(dir(txn_hash))
                 txn_hash_str = txn_hash.hex()
                 if tx:
                     transaction = Transaction.objects.create(wallet_address=wallet_address, txn_hash=txn_hash_str)
@@ -82,7 +82,7 @@ class FundAddressAPIView(APIView):
 You can view and track your transaction at https://sepolia.etherscan.io/tx/{txn_hash_str}'''
                         }, HTTP_201_CREATED)
             
-            return Response("An Error Occured. Please Try Again later", HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({"mesage":"An Error Occured. Please Try Again later"}, HTTP_503_SERVICE_UNAVAILABLE)
         else:#if raise exception is set to true this block doesnt execute though
             return Response(serializer.errors, HTTP_400_BAD_REQUEST)
 
@@ -92,35 +92,21 @@ class TransactionStatsAPIView(APIView):
     The `faucet/stats/` View class implementation
     To get stats of  transactions in the last 24hrs
     """
-    serializer_class= StatsSerializer
 
     @extend_schema(
         summary='Get Transactions Stats View',
         description="This is GET method api endpoint get transaction statistics in the last 24hrs",
-        request= StatsSerializer,
         responses={
             200: OpenApiResponse(description='Json Response'),
             400: OpenApiResponse(description='Validation error')
         }
     )
-
-    def get_serializer_context(self):
-        return {
-            'request':self.request,
-            'format': self.format_kwarg,
-            'view':self
-            }
-
-    def get_serializer(self, *args, **kwargs):
-        kwargs['context'] = self.get_serializer_context()
-        return self.serializer_class(*args, **kwargs)
-    
     
     def get(self, request):
         txns = Transaction.objects.\
             filter(created_at__gte = timezone.now() - timedelta(hours=24,)).\
             values("status").annotate(count= Count("id"))
-        print(txns)
+        #print(txns)
         res = defaultdict(int)
         for txn in txns:
             if txn.get("status") == "confirmed":

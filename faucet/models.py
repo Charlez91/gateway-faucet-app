@@ -35,16 +35,16 @@ class Transaction(Model):
         if self.status != Transaction.TxnStatus.CONFIRMED:
             self.status = Transaction.TxnStatus.CONFIRMED
             self.block_number = block_number
-            print("marking as confirmed")
+            #print("marking as confirmed")
             self.save()
     
     def mark_as_failed(self):
         """
-        Method to mark the order as delivered.
+        Method to mark the Transaction as failed.
         """
         if self.status != Transaction.TxnStatus.FAILED:
             self.status = Transaction.TxnStatus.FAILED
-            print("marking as failed")
+            #print("marking as failed")
             self.save()
 
     class Meta:

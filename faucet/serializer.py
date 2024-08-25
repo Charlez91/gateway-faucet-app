@@ -32,11 +32,3 @@ class FundSerializer(Serializer):
             raise ValidationError("Faucet Funds are low. Try Again later", HTTP_400_BAD_REQUEST)
         
         return super().validate(data)
-        
-
-
-
-
-
-class StatsSerializer(Serializer):
-    pass
