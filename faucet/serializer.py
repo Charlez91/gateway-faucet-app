@@ -11,7 +11,7 @@ class TxnPendingException(APIException):
     and yet to be mined. made to help backoff function retry
     """
     status_code = HTTP_400_BAD_REQUEST
-    default_detail: str = "There is not enough stock"
+    default_detail: str = "Txn is pending"
     default_code: str = "invalid"
 
 class FundSerializer(Serializer):
@@ -26,9 +26,3 @@ class FundSerializer(Serializer):
             raise ValidationError("Wallet Address Must be A valid ETH address. ENS not supported for now")
         return value
     
-    def validate(self, data):
-        account = get_account()
-        if web3.eth.get_balance(account.address) <= web3.to_wei(0.0001, 'ether'):
-            raise ValidationError("Faucet Funds are low. Try Again later", HTTP_400_BAD_REQUEST)
-        
-        return super().validate(data)
